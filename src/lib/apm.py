@@ -34,9 +34,9 @@ class AdaptivePenaltyMethod:
         """
         if self.variant == "APM":
             sum_objective_function = np.sum(objective_function_values)
-        elif self.variant == "AMP_Med_3":
+        elif self.variant == "APM_Med_3":
             sum_objective_function = np.median(objective_function_values)
-        elif self.variant == "AMP_Worst":
+        elif self.variant == "APM_Worst":
             sum_objective_function = np.max(objective_function_values)
         elif self.variant == "APM_Spor_Mono":
             sum_objective_function = 0.8 * np.max(objective_function_values) + 0.2 * np.mean(objective_function_values)

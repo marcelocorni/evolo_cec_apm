@@ -130,7 +130,7 @@ def main():
     # Parâmetros do problema
     number_of_constraints = 3 # Número de variáveis de dicsão, no caso do problema da mola são x1, x2 e x3
 
-    variants = ["APM", "AMP_Med_3", "AMP_Worst", "APM_Spor_Mono"]
+    variants = ["APM", "APM_Med_3", "APM_Worst", "APM_Spor_Mono"]
     model_classes = {"GA": GA.BaseGA, "PSO": PSO.OriginalPSO}
 
     # Interface gráfica
