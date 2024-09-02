@@ -141,7 +141,7 @@ def main():
         with st.form(key="config_form"):
             num_executions = st.number_input("Número de execuções", min_value=1, max_value=100, value=35, step=1, key="num_executions")
             num_evaluations = st.number_input("Número total de avaliações", min_value=1000, max_value=100000, value=36000, step=1000, key="num_evaluations")
-            pop_size = st.number_input("Tamanho da população", min_value=1, max_value=100, value=50, step=1, key="pop_size")
+            pop_size = st.number_input("Tamanho da população", min_value=1, max_value=200, value=50, step=1, key="pop_size")
             submit_button = st.form_submit_button("Executar")
 
     if not submit_button:

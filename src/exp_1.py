@@ -94,100 +94,105 @@ def main():
 
     st.title("Otimização com GA e PSO utilizando Mealpy")
     
-    nruns = st.sidebar.number_input("Número de Execuções", min_value=1, max_value=50, value=20)
-    maxfes = st.sidebar.number_input("Número de Avaliações de Função", min_value=1000, max_value=100000, value=50000)
-    
-    pop_size = st.sidebar.slider("Tamanho da População", 10, 200, 50)
-    epoch = round(maxfes / pop_size)
-
     col1, col2 = st.columns(2)
     
+    with st.sidebar:
+            with st.form(key="config_form"):
+                nruns = st.number_input("Número de Execuções", min_value=1, max_value=50, value=20)
+                maxfes = st.number_input("Número de Avaliações de Função", min_value=1000, max_value=100000, value=50000)
+
+                pop_size = st.number_input("Tamanho da população", min_value=1, max_value=200, value=50, step=1, key="pop_size")
+                epoch = round(maxfes / pop_size)
+                submit_button = st.form_submit_button("Executar")
+
+    if not submit_button:
+        return
+
     with col1:
-        if st.button("Executar"):
-            start_time = time.time()
-            agrupados = {
-                "dataframes":[],
-                "geomeans":[]
-            }
+        start_time = time.time()
+        agrupados = {
+            "dataframes":[],
+            "geomeans":[]
+        }
 
-            for algoritmo in algoritmos:
-                with st.spinner(f"Executando otimizações para {algoritmo}..."):
-                    for run in range(nruns):
+        for algoritmo in algoritmos:
+            with st.spinner(f"Executando otimizações para {algoritmo}..."):
+                for run in range(nruns):
 
-                        f1 = F52017(ndim=30, f_bias=0)
-                        f2 = F92017(ndim=30, f_bias=0),
-                        f3 = F112017(ndim=30, f_bias=0)
-                        
-                        run_experiment(algoritmo, p1, pop_size, epoch, False)
+                    f1 = F52017(ndim=30, f_bias=0)
+                    f2 = F92017(ndim=30, f_bias=0),
+                    f3 = F112017(ndim=30, f_bias=0)
+                    
+                    run_experiment(algoritmo, p1, pop_size, epoch, False)
 
-                        f1 = F52017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D')
-                        f2 = F92017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D'),
-                        f3 = F112017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D')
+                    f1 = F52017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D')
+                    f2 = F92017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D'),
+                    f3 = F112017(ndim=30, f_bias=0, f_shift='shift_data_2',f_matrix='M_2_D')
 
-                        run_experiment(algoritmo, p1, pop_size, epoch, True)
+                    run_experiment(algoritmo, p1, pop_size, epoch, True)
 
-                end_time = time.time()
+            end_time = time.time()
+        
+        
+            # Calcular horas, minutos e segundos que foram necessários para a execução
+            tempo_execucao = end_time - start_time
+            horas = int(tempo_execucao // 3600)
+            minutos = int((tempo_execucao % 3600) // 60)
+            segundos = int(tempo_execucao % 60)
             
+            # Atualizar o ratio para cada função
+            for idx in range(len(resultados["Problema"])):
+                resultados["shifted"][idx] = np.mean(resultados["shifted"][idx])
+                resultados["unshifted"][idx] = np.mean(resultados["unshifted"][idx])
+                resultados["ratio"][idx] = resultados["unshifted"][idx] / resultados["shifted"][idx]
             
-                # Calcular horas, minutos e segundos que foram necessários para a execução
-                tempo_execucao = end_time - start_time
-                horas = int(tempo_execucao // 3600)
-                minutos = int((tempo_execucao % 3600) // 60)
-                segundos = int(tempo_execucao % 60)
+            with col1:
+                # Criar um dataframe com os resultados
+                st.write(f"Resultados para o algoritmo {algoritmo}")
                 
-                # Atualizar o ratio para cada função
-                for idx in range(len(resultados["Problema"])):
-                    resultados["shifted"][idx] = np.mean(resultados["shifted"][idx])
-                    resultados["unshifted"][idx] = np.mean(resultados["unshifted"][idx])
-                    resultados["ratio"][idx] = resultados["unshifted"][idx] / resultados["shifted"][idx]
+                st.write("Média geométrica da razão entre as funções com e sem shift")
+                geometric_mean = np.prod(resultados["ratio"]) ** (1 / len(resultados["ratio"]))
                 
-                with col1:
-                    # Criar um dataframe com os resultados
-                    st.write(f"Resultados para o algoritmo {algoritmo}")
-                    
-                    st.write("Média geométrica da razão entre as funções com e sem shift")
-                    geometric_mean = np.prod(resultados["ratio"]) ** (1 / len(resultados["ratio"]))
-                    
-                    # Convertentdo os valores do DataFrame para notaçao científica
-                    df = pd.DataFrame(resultados)
-                    df["unshifted"] = df["unshifted"].apply(lambda x: f"{x:.2e}")
-                    df["shifted"] = df["shifted"].apply(lambda x: f"{x:.2e}")
-                    df["ratio"] = df["ratio"].apply(lambda x: f"{x:.2e}")
-                    
-                    # Adicionando coluna com o nome do algoritmo no dataframe na segunda coluna
-                    df.insert(0, "Algoritmo", algoritmo)
-                    
-                    st.write(df)
-
-                    agrupados["dataframes"].append(df)
-                    
-
-                    # Exibindo a média gemoétrica com notaçao científica
-                    st.write(f"Média Geométrica (ratio): {geometric_mean:.2e}")
-                    agrupados["geomeans"].append([algoritmo,geometric_mean])
-
-                    st.success(f"Execução finalizada em {horas} horas, {minutos} minutos e {segundos} segundos.")
+                # Convertentdo os valores do DataFrame para notaçao científica
+                df = pd.DataFrame(resultados)
+                df["unshifted"] = df["unshifted"].apply(lambda x: f"{x:.2e}")
+                df["shifted"] = df["shifted"].apply(lambda x: f"{x:.2e}")
+                df["ratio"] = df["ratio"].apply(lambda x: f"{x:.2e}")
                 
-            with col2:
-                df_unificado = pd.concat(agrupados["dataframes"])
+                # Adicionando coluna com o nome do algoritmo no dataframe na segunda coluna
+                df.insert(0, "Algoritmo", algoritmo)
                 
-                # Criando esquema de cores personalizadas para cada algoritmo
-                colors = {"GA": "dodgerblue", "PSO": "goldenrod"}
+                st.write(df)
 
-                # Exibindo gráfico de barras estacadas com os resultados para cada algoritmo X função
-                fig = px.bar(df_unificado, x="Problema", y="ratio", title=f"Razão entre as funções com e sem shift para os algoritmos GA e PSO", text="ratio", color="Algoritmo", labels={"ratio": "Razão", "Problema": "Função"}, barmode="group", color_discrete_map=colors)
-                fig.update_yaxes(tickformat=".2e")
-                st.plotly_chart(fig)
+                agrupados["dataframes"].append(df)
+                
 
-                # Criando um DataFrame com a média geométrica agrupara de cada algoritmo
-                medias = pd.DataFrame(agrupados["geomeans"], columns=["Algoritmo", "geomeans"])
+                # Exibindo a média gemoétrica com notaçao científica
+                st.write(f"Média Geométrica (ratio): {geometric_mean:.2e}")
+                agrupados["geomeans"].append([algoritmo,geometric_mean])
 
-                # Exibindo o gráfico de média geométrica para cada algoritmo
-                fig = px.bar(medias, x="Algoritmo", y="geomeans", title="Média Geométrica das razões entre as funções com e sem shift para os algoritmos GA e PSO", color="Algoritmo",text="geomeans", labels={"Algoritmo": "Algoritmo", "geomeans": "Média Geométrica"}, color_discrete_map=colors)
-                fig.update_yaxes(tickformat=".2e")
-                # Atualizando o texto das barras para notação científica
-                fig.update_traces(texttemplate="%{text:.2e}")
-                st.plotly_chart(fig)
+                st.success(f"Execução finalizada em {horas} horas, {minutos} minutos e {segundos} segundos.")
+            
+    with col2:
+        df_unificado = pd.concat(agrupados["dataframes"])
+        
+        # Criando esquema de cores personalizadas para cada algoritmo
+        colors = {"GA": "dodgerblue", "PSO": "goldenrod"}
+
+        # Exibindo gráfico de barras estacadas com os resultados para cada algoritmo X função
+        fig = px.bar(df_unificado, x="Problema", y="ratio", title=f"Razão entre as funções com e sem shift para os algoritmos GA e PSO", text="ratio", color="Algoritmo", labels={"ratio": "Razão", "Problema": "Função"}, barmode="group", color_discrete_map=colors)
+        fig.update_yaxes(tickformat=".2e")
+        st.plotly_chart(fig)
+
+        # Criando um DataFrame com a média geométrica agrupara de cada algoritmo
+        medias = pd.DataFrame(agrupados["geomeans"], columns=["Algoritmo", "geomeans"])
+
+        # Exibindo o gráfico de média geométrica para cada algoritmo
+        fig = px.bar(medias, x="Algoritmo", y="geomeans", title="Média Geométrica das razões entre as funções com e sem shift para os algoritmos GA e PSO", color="Algoritmo",text="geomeans", labels={"Algoritmo": "Algoritmo", "geomeans": "Média Geométrica"}, color_discrete_map=colors)
+        fig.update_yaxes(tickformat=".2e")
+        # Atualizando o texto das barras para notação científica
+        fig.update_traces(texttemplate="%{text:.2e}")
+        st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
